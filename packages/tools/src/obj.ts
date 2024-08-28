@@ -1,3 +1,5 @@
+import lodash from 'lodash-es';
+
 /* eslint-disable @typescript-eslint/ban-types,@typescript-eslint/no-explicit-any */
 type ObjMapCallback = (key: string, value: any) => any;
 
@@ -82,4 +84,57 @@ export function convertNullToUndefined<T>(value: T): T {
   }
 
   return convert(value);
+}
+
+export type AggregateKeysMapping = Record<string, string[]>;
+
+export type AggregateOptions = {
+
+  /** 最大递归深度，默认为 1，auto 表示完全递归，支持自定义递归深度 */
+  maxDepth?: 'auto' | number;
+
+  /** 是否剔除已经被聚合的键，默认是 */
+  omitAggregatedKeys?: boolean;
+};
+
+/**
+ * 对象聚合函数，通过将对象的某些属性值聚合到一个属性
+ * @param obj 要聚合的对象
+ * @param depth 当前聚合的深度，默认为1
+ * @param mapping 聚合规则映射，指定哪些属性应该被聚合到哪个属性中，不允许待映射键和聚合映射键相同
+ * @param options 配置选项
+ * @returns 返回聚合后的对象
+ */
+function aggregate<T extends Object>(obj: T, depth: number = 1, mapping: AggregateKeysMapping = {}, options: AggregateOptions = {}): Object {
+  const { maxDepth = 1, omitAggregatedKeys = true } = options;
+  let result = lodash.cloneDeep(obj) as any;
+  Object.entries(mapping).forEach(([key, aggregatedKeys]) => {
+    // 存在同名键直接跳过
+    if (Object.prototype.hasOwnProperty.call(result, key)) {
+      return;
+    }
+    // 存在键值为对象的情况，未达到递归最大深度设置，继续递归
+    if (lodash.isPlainObject(result[key]) && (maxDepth === 'auto' || depth < maxDepth)) {
+      lodash.set(result, key, aggregate(result[key], depth + 1, mapping, options));
+      return;
+    }
+    lodash.set(result, key, lodash.pick(result, aggregatedKeys));
+    // 剔除已经被聚合的键
+    if (omitAggregatedKeys) {
+      result = lodash.omit(result, aggregatedKeys);
+    }
+  });
+
+  return result;
+}
+
+/**
+ * 对象聚合函数，通过将对象的某些属性值聚合到一个属性
+ * @param obj 要聚合的对象
+ * @param mapping 聚合规则映射，指定哪些属性应该被聚合到哪个属性中
+ * @param options 配置选项·
+ * @returns 返回聚合后的对象
+ */
+export function aggregateObj<T extends Object>(obj: T, mapping: AggregateKeysMapping = {}, options: AggregateOptions = {}): Object {
+  return aggregate(obj, 1, mapping, options);
 }

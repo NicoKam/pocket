@@ -79,3 +79,25 @@ export default () => (
   </div>
 );
 ```
+
+## aggregateObj 聚合对象
+
+```ts
+/**
+ * 对象聚合函数，通过将对象的某些属性值聚合到一个属性
+ * @param obj 要聚合的对象
+ * @param mapping 聚合规则映射，指定哪些属性应该被聚合到哪个属性中
+ * @param options 配置选项·
+ * @returns 返回聚合后的对象
+ */
+function aggregateObj<T extends Object>(obj: T, mapping: AggregateKeysMapping = {}, options: AggregateOptions = {}): Object;
+```
+
+<code src="./demo/AggregateObjDemo"></code>
+
+### 选项
+
+| 参数               | 说明                                                | 类型               | 默认值 |
+| ------------------ | --------------------------------------------------- | ------------------ | ------ |
+| maxDepth           | 最大递归深度，auto 表示完全递归，支持自定义递归深度 | `auto` \| `number` | 1      |
+| omitAggregatedKeys | 是否剔除已经被聚合的键                              | `boolean`          | true   |
